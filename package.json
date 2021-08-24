@@ -1,0 +1,34 @@
+{
+	"name": "@saber2pr/vsc-code-checker",
+	"displayName": "Code Checker",
+	"description": "check code and emit red lines.",
+	"publisher": "saber2pr",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.56.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"icon": "assets/logo.png",
+	"activationEvents": [
+		"onLanguage:plaintext"
+	],
+	"main": "./out/client/extension.js",
+	"scripts": {
+		"vscode:prepublish": "yarn run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"build": "vsce package"
+	},
+	"devDependencies": {
+		"@types/node": "^12.11.7",
+		"@types/vscode": "^1.56.0",
+		"typescript": "^4.1.3"
+	},
+	"dependencies": {
+		"vscode-languageclient": "^7.0.0",
+		"vscode-languageserver": "^7.0.0",
+		"vscode-languageserver-textdocument": "^1.0.1"
+	}
+}
