@@ -1,28 +1,48 @@
-import { existsSync, readFile, realpathSync } from 'fs'
+import { existsSync, realpathSync } from 'fs'
 import * as path from 'path'
-import { promisify } from 'util'
 import { _Connection } from 'vscode-languageserver'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 
-export type ValidataRule = {
-  pattern: string
+export type IConfig = {
+  extendsBase?: boolean
+  lints: Validator[]
+}
+
+export type Validator = {
+  test: RegExp
+  rule: ((result: RegExpExecArray) => boolean) | string
   message: string
   type: 'Error' | 'Warning' | 'Information' | 'Hint'
 }
 
-export const getConfig = async (rootPath: string) => {
-  if (rootPath) {
-    const configFile = path.join(rootPath, '.code-check.json')
-    let buf: Buffer
-    try {
-      buf = await promisify(readFile)(configFile)
-    } catch (error) {}
-    if (buf) {
-      return JSON.parse(buf.toString()) as ValidataRule[]
-    }
+const defaultConfig: IConfig = {
+  lints: [],
+}
+
+const applyConfigDefaults = (config: IConfig) => {
+  const extendsBase = config.extendsBase ?? true
+  if (extendsBase) {
+    config.lints.push(...defaultConfig.lints)
+    config.extendsBase = false
   }
-  return []
+}
+
+export const applyValidatorDefaults = (validator: Validator) => {
+  validator.message ??= 'UnExpect Item'
+  validator.type ??= 'Error'
+}
+
+export const getConfig = async (rootPath: string): Promise<IConfig> => {
+  if (rootPath) {
+    const configFile = path.join(rootPath, '.code-check.js')
+    try {
+      const config = require(configFile)
+      applyConfigDefaults(config)
+      return config
+    } catch (error) {}
+  }
+  return defaultConfig
 }
 
 const enum CharCode {
@@ -33,7 +53,10 @@ const enum CharCode {
 }
 
 // 项目标识
-const projectFolderIndicators: [string, boolean][] = [['package.json', true]]
+const projectFolderIndicators: [string, boolean][] = [
+  ['package.json', true],
+  ['.code-check.json', true],
+]
 
 function isUNC(path: string): boolean {
   if (process.platform !== 'win32') {
@@ -145,17 +168,17 @@ export function getFilePath(
   return getFileSystemPath(uri)
 }
 
-const document2Settings = new Map<string, ValidataRule[]>()
+const document2Settings = new Map<string, string>()
 
 // 获取当前文档的rule配置
 export async function resolveSettings(
   connection: _Connection,
   document: TextDocument
-): Promise<ValidataRule[]> {
+): Promise<IConfig> {
   const uri = document.uri
-  let resultPromise = document2Settings.get(uri)
-  if (resultPromise) {
-    return resultPromise
+  let result = document2Settings.get(uri)
+  if (result) {
+    return getConfig(result)
   }
 
   const workspaceFolder = await connection.workspace.getConfiguration(
@@ -166,9 +189,7 @@ export async function resolveSettings(
   const filePath = getFilePath(document)
 
   const projectRootPath = findWorkingDirectory(workspaceFolderPath, filePath)
-  console.log('projectRootPath', workspaceFolderPath, filePath)
-  const settings = await getConfig(projectRootPath)
-  document2Settings.set(uri, settings)
+  document2Settings.set(uri, projectRootPath)
 
-  return settings
+  return getConfig(projectRootPath)
 }

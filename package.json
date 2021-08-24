@@ -12,7 +12,7 @@
 	],
 	"icon": "assets/logo.png",
 	"activationEvents": [
-		"onLanguage:plaintext"
+		"*"
 	],
 	"main": "./out/client/extension.js",
 	"scripts": {
