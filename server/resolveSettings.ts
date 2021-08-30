@@ -11,9 +11,9 @@ export type IConfig = {
 
 export type Validator = {
   test: RegExp
-  rule: ((result: RegExpExecArray) => boolean) | string
-  message: string
-  type: 'Error' | 'Warning' | 'Information' | 'Hint'
+  rule?: ((result: RegExpExecArray) => boolean) | string
+  message?: string
+  type?: 'Error' | 'Warning' | 'Information' | 'Hint'
 }
 
 const defaultConfig: IConfig = {
@@ -29,6 +29,7 @@ const applyConfigDefaults = (config: IConfig) => {
 }
 
 export const applyValidatorDefaults = (validator: Validator) => {
+  validator.rule ??= () => true
   validator.message ??= 'UnExpect Item'
   validator.type ??= 'Error'
 }

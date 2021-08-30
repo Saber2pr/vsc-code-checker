@@ -27,8 +27,8 @@ const validate = (validator: Validator, m: RegExpExecArray) => {
   if (typeof rule === 'function') {
     return rule(m)
   } else if (typeof rule === 'string') {
-    const str = m?.[0] ?? ''
-    return new RegExp(rule).test(str)
+    const str = m?.[0] 
+    return str && new RegExp(rule).test(str)
   }
   return false
 }
@@ -57,19 +57,19 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     // 遍历每个pattern匹配到的符号
     while ((m = pattern.exec(text)) && problems < MaxNumberOfProblems) {
       problems++
-      const catched = lints.find(validator => validate(validator, m))
+      const catched = validate(validator, m)
       if (catched) {
         // 创建一个问题
         const diagnostic: Diagnostic = {
           // 问题级别
-          severity: DiagnosticSeverity[catched.type],
+          severity: DiagnosticSeverity[validator.type],
           // 问题位置
           range: {
             start: textDocument.positionAt(m.index),
             end: textDocument.positionAt(m.index + m[0].length),
           },
           // 问题信息
-          message: catched.message,
+          message: validator.message,
           // 问题标识
           source: 'Lint:',
         }
@@ -83,7 +83,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
                 uri: textDocument.uri,
                 range: Object.assign({}, diagnostic.range),
               },
-              message: catched.message,
+              message: validator.message,
             },
           ]
         }
