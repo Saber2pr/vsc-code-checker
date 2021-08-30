@@ -1,5 +1,5 @@
 {
-	"name": "@saber2pr/vsc-code-checker",
+	"name": "code-checker",
 	"displayName": "Code Checker",
 	"description": "check code and emit red lines.",
 	"publisher": "saber2pr",
